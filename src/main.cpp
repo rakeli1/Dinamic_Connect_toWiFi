@@ -75,7 +75,7 @@ void setup()
   http.addHeader("Connection", "close");               
 
  
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);//раскомментировать при запросе в банк
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);//раскомментировать при запросе в банк!
   
   
   int httpCode = http.GET();
