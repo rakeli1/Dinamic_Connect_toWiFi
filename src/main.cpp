@@ -14,20 +14,10 @@
 const char* ssid = "TP-Link_C810";
 const char* password = "91891518";
 
-//WiFiClient client;
-const char*root_ca = \
-"-----BEGIN CERTIFICATE-----\n" \
-"...содержимое сертификата bank.gov.ua..." \
-"-----END CERTIFICATE-----\n";
-
-
-
-
-
 
 String url = "https://api.openweathermap.org/data/2.5/forecast?lat=50.4333&lon=30.6167&appid=f2af430fc3518278afe78c607fbf2623&units=metric";
-String urlBank = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?&jsonvalcode=EUR&date=20251111";
-StaticJsonDocument<1024>doc;
+String urlBank = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?&jsonvalcode=EUR&date=20260101";
+StaticJsonDocument<2048>doc;
 
 
 
@@ -53,7 +43,7 @@ void setup()
   
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 
-  time_t now;
+
   while(time(nullptr) < 100000)
   {
     delay(500);
@@ -64,34 +54,40 @@ void setup()
  WiFiClientSecure clientsec;
  clientsec.setInsecure();
 
-  HTTPClient http;
+  
 
-  http.begin(clientsec, url);
-  http.addHeader("User-Agent", "ESP32");
-  http.addHeader("Accept", "application/json");
-
- // if(!clientsec.connect("bank.gov.ua", 443))
-  //{
-   // Serial.println("Connection failed");
-   // return;
-  //}
- // Serial.println("TLS connected");
+ 
 
   Serial.println("WiFi Connected!");
   Serial.print("IP: ");
   Serial.println(WiFi.localIP());
-  
-  //http.begin(clientsec, url);
-  int httpCode = http.GET();
- // String pyload = http.getString();// отладка для запроса в банк
-  //Serial.println(pyload);          // отладка для запроса в банк
 
-  if(httpCode ==200)
+
+
+  HTTPClient http;
+
+  http.begin(clientsec, urlBank); 
+
+  http.setTimeout(5000);
+  http.useHTTP10(true);                     
+  http.addHeader("User-Agent", "ESP32");               
+  http.addHeader("Accept", "application/json");        
+  http.addHeader("Connection", "close");               
+
+ 
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);//раскомментировать при запросе в банк
+  
+  
+  int httpCode = http.GET();
+ 
+
+  if(httpCode > 0)
   {
     DeserializationError error = deserializeJson(doc, http.getStream());
     Serial.println(httpCode);
     if(!error)
     {
+      //Serial.println("JSON REQUEST");
       serializeJsonPretty(doc, Serial);
     }else
     {
@@ -110,11 +106,7 @@ void setup()
 void loop() 
 { 
   
-    //if(WiFi.status() == WL_CONNECTED)
-    //{
-      // Serial.println(WiFi.localIP());
-    //}
-    //delay(3000);
+    
 }
   
     
