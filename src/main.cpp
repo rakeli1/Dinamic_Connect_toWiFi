@@ -17,9 +17,24 @@ const char* password = "91891518";
 
 String url = "https://api.openweathermap.org/data/2.5/forecast?lat=50.4333&lon=30.6167&appid=f2af430fc3518278afe78c607fbf2623&units=metric";
 String urlBank = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchangenew?&jsonvalcode=EUR&date=20260101";
-StaticJsonDocument<2048>doc;
+JsonDocument doc;
 
 
+
+
+String response;
+
+struct WeatherPoint
+{
+   String timeData;
+   float temp;
+   float humidity;
+   float pressure;
+};
+
+constexpr int MAX_POINTS = 40;
+WeatherPoint forecastPoints[MAX_POINTS];
+int pointsCount = 0;
 
 
 
@@ -27,12 +42,15 @@ StaticJsonDocument<2048>doc;
 void setup() 
 {
   Serial.begin(9600);
-  delay(5000);
+  delay(3000);
   Serial.println("=====SETUP START=====");
   //clientsec.setCACert(root_ca);
+
   
+  
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
   WiFi.begin(ssid, password);
- // WiFi.mode(WIFI_STA);
  delay(500);
   Serial.print("Connecting to WiFi");
   while(WiFi.status()!= WL_CONNECTED)
@@ -40,6 +58,7 @@ void setup()
     delay(500);
     Serial.print(".");
   }
+  delay(3000);
   
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 
@@ -66,15 +85,12 @@ void setup()
 
   HTTPClient http;
 
-  http.begin(clientsec, urlBank); 
-
-  http.setTimeout(5000);
-  http.useHTTP10(true);                     
-  http.addHeader("User-Agent", "ESP32");               
-  http.addHeader("Accept", "application/json");        
-  http.addHeader("Connection", "close");               
-
- 
+  http.begin(clientsec, urlBank);                   
+  http.useHTTP10(true);                       // раскомментировать при запросе в банк
+  http.addHeader("User-Agent", "ESP32");      //  раскомментировать при запросе в банк       
+  http.addHeader("Accept", "application/json"); // раскомментировать при запросе в банк      
+  http.addHeader("Connection", "close");       //  раскомментировать при запросе в банк      
+  http.setTimeout(5000);                       // раскоментировать при запросе в банк
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);//раскомментировать при запросе в банк!
   
   
@@ -88,7 +104,8 @@ void setup()
     if(!error)
     {
       //Serial.println("JSON REQUEST");
-      serializeJsonPretty(doc, Serial);
+      serializeJson(doc, response);
+      
     }else
     {
       Serial.print("JSON parse error: ");
@@ -100,11 +117,33 @@ void setup()
     Serial.println(httpCode);
   }
   http.end();
+
+  Serial.println(response);
 }
+
 
 
 void loop() 
 { 
+  JsonArray arr = doc["list"];
+  
+  for(JsonObject p : arr)
+  {
+     if(pointsCount >= MAX_POINTS) break;
+
+     //forecastPoints[pointsCount].timeData = p["dt_txt"];
+     //forecastPoints[pointsCount].temp     = p["main"]["temp"];
+     //forecastPoints[pointsCount].humidity = p["main"]["humidity"];
+     //forecastPoints[pointsCount].pressure = p["main"]["pressure"];
+     //pointsCount++;
+  }
+     for(int i = 0; i < pointsCount; i++)
+     {
+       //Serial.print("Time: "); Serial.println(forecastPoints[i].timeData);
+       //Serial.print("Temp: "); Serial.println(forecastPoints[i].temp);
+       //Serial.print("Humidity: "); Serial.println(forecastPoints[i].humidity);
+       //Serial.print("Pressure: "); Serial.println(forecastPoints[i].pressure);
+     }
   
     
 }
